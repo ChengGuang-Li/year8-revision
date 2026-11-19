@@ -22,7 +22,7 @@
       },
       {
         type:'testExplorer',title:'Congruent & similar: the evidence',eyebrow:'Visual recap · click a test to highlight its evidence',
-        phase:'Visual recap · 5–7 min',notes:'先用Shape & size对照：Congruent同形同大小，所有对应边相等，k=1；Similar同形、所有对应边成同一比例，大小可以不同。OBJECT是原图，IMAGE是变换后的图。点击Overlay让像与原图重叠，直观看到全等完全重合、相似放大后边长不同。可将相似比例改成1/2或1；k=1时它们也全等。随后只点击学生需要复习的方法：全等SSS、SAS、ASA、AAS、RHS；相似SSS、SAS、AA/AAA、RHS。实线粗边及角弧是已知证据，淡边仅是轮廓。同一颜色与同一标记表示对应位置。SAS必须是夹角；ASA的边在两角之间，AAS的边不在两角之间；RHS斜边在直角对面。切换Congruent与Similar时SSS/SAS/RHS保留当前方法，直接比较相等与同比例。无需完整讲授所有按钮。'
+        phase:'Visual recap · 5–7 min',notes:'先用Shape & size对照：Congruent同形同大小，所有对应边相等，k=1；Similar同形、所有对应边成同一比例，大小可以不同。OBJECT是原图，IMAGE是变换后的图。点击右侧每条条件，两个图形中对应的边或角会同时变红并加亮，其余证据淡化。ASA/AAS的两个角条件可以分别点击。点击Show all conditions恢复全部条件。Overlay支持叠合比较。相似比例只提供1、2、3，默认2；k=1时它们也全等。随后只点击学生需要复习的方法：全等SSS、SAS、ASA、AAS、RHS；相似SSS、SAS、AA/AAA、RHS。实线粗边及角弧是已知证据，淡边仅是轮廓。同一颜色与同一标记表示对应位置。SAS必须是夹角；ASA的边在两角之间，AAS的边不在两角之间；RHS斜边在直角对面。切换Congruent与Similar时SSS/SAS/RHS保留当前方法，直接比较相等与同比例。无需完整讲授所有按钮。'
       },
       {
         type:'comparison',title:'Congruent or similar?',eyebrow:'Reference · the tests and the differences',

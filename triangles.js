@@ -148,43 +148,64 @@
     rhs:{label:'RHS',edges:[1,2],angles:[0]},
     aa:{label:'AA / AAA',edges:[],angles:[0,1]}
   };
-  const explorer={mode:'congruent',test:'shape',scale:1.5,overlay:false};
+  const explorer={mode:'congruent',test:'shape',scale:2,overlay:false,focus:null};
   const explorerKeys=()=>explorer.mode==='congruent'?['shape','sss','sas','asa','aas','rhs']:['shape','sss','sas','aa','rhs'];
   const format=n=>Number(n.toFixed(2)).toString();
+  const condition=(label,edges=[],angles=[])=>({label,edges,angles});
   function explorerEvidence() {
     const congruent=explorer.mode==='congruent',k=congruent?1:explorer.scale;
-    const equal=congruent?'equal':'in the same ratio';
-    const result=congruent?'△ABC ≡ △DEF':'△ABC ∼ △DEF';
+    const side=(edge)=>{
+      const pairs=[['AB','DE'],['BC','EF'],['AC','DF']], [a,b]=pairs[edge];
+      return condition(congruent?`${a} = ${b}`:`${b} / ${a} = ${k}`,[edge]);
+    };
+    const angle=(index)=>condition(`∠${'ABC'[index]} = ∠${'DEF'[index]}${index===0?' = 90°':''}`,[],[index]);
     const evidence={
-      shape:{heading:congruent?'Same shape. Same size.':'Same shape. Size may differ.',detail:congruent?'Corresponding sides are equal.':'Every corresponding side uses the same multiplier.',facts:congruent?['AB = DE   AC = DF   BC = EF','Corresponding angles are equal.']:[`DE/AB = DF/AC = EF/BC = ${format(k)}`,'Corresponding angles are equal.'],note:congruent?'A turn or reflection also preserves congruence.':k===1?'At k = 1, these triangles are also congruent.':'Angles stay equal when side lengths change.'},
-      sss:{heading:congruent?'Three equal side pairs':'Three side pairs in one ratio',detail:`All three corresponding side pairs are ${equal}.`,facts:congruent?['AB = DE   AC = DF   BC = EF']:[`6/4 = 4.5/3 = 7.5/5 = 1.5`],note:'Check all three pairs.'},
-      sas:{heading:congruent?'Two sides and the included angle':'Two side ratios and the included angle',detail:`Two corresponding side pairs are ${equal}.`,facts:[congruent?'AB = DE   AC = DF':`DE/AB = DF/AC = ${format(k)}`,'∠A = ∠D = 90°'],note:'The equal angle must lie between the two given sides.'},
-      asa:{heading:'Two angles and the side between',detail:'Two equal angle pairs and their included equal side.',facts:['∠A = ∠D   ∠B = ∠E','AB = DE'],note:'The highlighted side joins the two marked angles.'},
-      aas:{heading:'Two angles and another side',detail:'Two equal angle pairs and an equal corresponding side.',facts:['∠A = ∠D   ∠B = ∠E','BC = EF'],note:'The highlighted side is not between the two marked angles.'},
-      rhs:{heading:congruent?'Right angle, hypotenuse, side':'Right angle and two side ratios',detail:congruent?'Equal hypotenuses and one equal matching leg.':'Hypotenuses and one matching leg have the same ratio.',facts:['∠A = ∠D = 90°',congruent?'BC = EF   AC = DF':`EF/BC = DF/AC = ${format(k)}`],note:'The hypotenuse lies opposite the right angle.'},
-      aa:{heading:'Two equal angle pairs',detail:'Two matching angles establish similarity.',facts:['∠A = ∠D   ∠B = ∠E','The third angle pair must also be equal.'],note:'AA / AAA fixes shape. It does not fix size.'}
+      shape:{heading:congruent?'Same shape. Same size.':'Same shape. Size may differ.',detail:congruent?'Corresponding sides are equal.':'Every corresponding side uses the same multiplier.',facts:[condition(congruent?'Equal corresponding sides':`All corresponding side ratios = ${k}`,[0,1,2]),condition('Equal corresponding angles',[],[0,1,2])],note:congruent?'A turn or reflection also preserves congruence.':k===1?'At k = 1, these triangles are also congruent.':'Angles stay equal when side lengths change.'},
+      sss:{heading:congruent?'Three equal side pairs':'Three side pairs in one ratio',detail:'Check each corresponding side pair.',facts:[side(0),side(2),side(1)],note:'All three conditions are required.'},
+      sas:{heading:congruent?'Two sides and the included angle':'Two side ratios and the included angle',detail:'The equal angle lies between the two given sides.',facts:[side(0),side(2),angle(0)],note:'Click the angle condition to see the included angle.'},
+      asa:{heading:'Two angles and the side between',detail:'The given side joins the two marked angles.',facts:[angle(0),angle(1),side(0)],note:'Each button highlights the matching pair.'},
+      aas:{heading:'Two angles and another side',detail:'The given side is not between the two marked angles.',facts:[angle(0),angle(1),side(1)],note:'Each button highlights the matching pair.'},
+      rhs:{heading:congruent?'Right angle, hypotenuse, side':'Right angle and two side ratios',detail:'The hypotenuse lies opposite the right angle.',facts:[angle(0),{...side(1),label:side(1).label+' · hypotenuse'},side(2)],note:'Compare the hypotenuse and one matching leg.'},
+      aa:{heading:'Two equal angle pairs',detail:'Two matching angles establish similarity.',facts:[angle(0),angle(1)],note:'AA / AAA fixes shape. It does not fix size.'}
     }[explorer.test];
-    if(explorer.test==='sss'&&!congruent)evidence.facts=[`${format(4*k)}/4 = ${format(3*k)}/3 = ${format(5*k)}/5 = ${format(k)}`];
-    return {...evidence,k,result};
+    return {...evidence,k,result:congruent?'△ABC ≡ △DEF':'△ABC ∼ △DEF'};
+  }
+  function angleSector(points,index,radius) {
+    const v=points[index],a=points[(index+1)%3],b=points[(index+2)%3];
+    const start=Math.atan2(a[1]-v[1],a[0]-v[0]);
+    let turn=Math.atan2(b[1]-v[1],b[0]-v[0])-start;
+    while(turn>Math.PI)turn-=2*Math.PI;
+    while(turn<-Math.PI)turn+=2*Math.PI;
+    const p=[v[0]+radius*Math.cos(start),v[1]+radius*Math.sin(start)];
+    const q=[v[0]+radius*Math.cos(start+turn),v[1]+radius*Math.sin(start+turn)];
+    return `<path d="M ${v.join(' ')} L ${p.join(' ')} A ${radius} ${radius} 0 0 ${turn>0?1:0} ${q.join(' ')} Z" class="condition-sector"/>`;
   }
   function explorerTriangle(letters,k=1) {
-    const points=[[0,0],[180,0],[0,-135]],test=explorerTests[explorer.test];
-    const edges=[[0,1,4],[1,2,5],[2,0,3]],labelPoints=[[90,31/k],[90+27/k,-67.5-17/k],[-29/k,-67.5]];
+    const points=[[0,0],[225,0],[0,-168.75]],test=explorerTests[explorer.test];
+    const focused=explorer.focus===null?null:explorerEvidence().facts[explorer.focus];
+    const edges=[[0,1,4],[1,2,5],[2,0,3]],labelPoints=[[112.5,34/k],[112.5+31/k,-84.375-21/k],[-32/k,-84.375]];
     let body=polygon(points,'explorer-fill');
     edges.forEach(([a,b,length],i)=>{
-      const active=test.edges.includes(i),cls=`explorer-edge evidence-${i}${active?' is-evidence':''}`;
-      body+=line(points[a],points[b],cls);
+      const active=test.edges.includes(i),selected=Boolean(focused?.edges.includes(i));
+      const state=selected?' is-focused':focused&&active?' is-dimmed':'';
+      if(selected)body+=line(points[a],points[b],'condition-edge-halo');
+      body+=line(points[a],points[b],`explorer-edge evidence-${i}${active?' is-evidence':''}${state}`);
       if(active) {
         const pos=labelPoints[i],anchor=i===2?'end':'middle';
-        body+=text(pos[0],pos[1],`${format(length*k)} cm`,'explorer-length',anchor);
-        if(explorer.mode==='congruent')body+=`<g class="explorer-ticks evidence-${i}">${ticks(points[a],points[b],i+1)}</g>`;
+        body+=text(pos[0],pos[1],`${format(length*k)} cm`,`explorer-length${state}`,anchor);
+        if(explorer.mode==='congruent')body+=`<g class="explorer-ticks evidence-${i}${state}">${ticks(points[a],points[b],i+1)}</g>`;
       }
     });
     test.angles.forEach(i=>{
-      let arc=i===0?`<path d="M ${17/k} 0 v ${-17/k} h ${-17/k}"/>`:angleAt(points,i,'',{radius:25/k})+(i===1?angleAt(points,i,'',{radius:31/k}):angleAt(points,i,'',{radius:31/k})+angleAt(points,i,'',{radius:37/k}));
-      body+=`<g class="explorer-angle is-evidence">${arc}</g>`;
+      const selected=Boolean(focused?.angles.includes(i));
+      const state=selected?' is-focused':focused?' is-dimmed':'';
+      const arc=i===0?`<path d="M ${21/k} 0 v ${-21/k} h ${-21/k}"/>`:angleAt(points,i,'',{radius:31/k})+(i===1?angleAt(points,i,'',{radius:38/k}):angleAt(points,i,'',{radius:38/k})+angleAt(points,i,'',{radius:45/k}));
+      body+=`<g class="explorer-angle is-evidence${state}">${selected?angleSector(points,i,56/k):''}${arc}</g>`;
     });
-    [[-18/k,22/k],[180+22/k,12/k],[-13/k,-135-18/k]].forEach((p,i)=>body+=text(p[0],p[1],letters[i],'explorer-vertex'));
+    [[-20/k,25/k],[225+25/k,13/k],[-14/k,-168.75-20/k]].forEach((p,i)=>{
+      const label=explorer.overlay&&letters==='ABC'?`${letters[i]} / ${'DEF'[i]}`:letters[i];
+      body+=text(p[0],p[1],label,`explorer-vertex${focused?.angles.includes(i)?' is-focused':''}`);
+    });
     return body;
   }
   function testExplorer(s) {
@@ -192,40 +213,47 @@
       <div class="explorer-topline"><div class="relationship-switch" role="group" aria-label="Compare relationships"><button type="button" data-relationship="congruent" aria-pressed="true">Congruent <span>≡</span></button><button type="button" data-relationship="similar" aria-pressed="false">Similar <span>∼</span></button></div><p>Object = original triangle. Image = transformed triangle.</p></div>
       <div class="test-picker" role="tablist" aria-label="Triangle tests" data-test-picker></div>
       <div class="explorer-stage" id="test-evidence-panel" role="tabpanel" aria-labelledby="test-shape-tab">
-        <div class="explorer-visual"><figure class="explorer-figure">${svg('Object ABC and image DEF. Compare corresponding sides and angles.',`<g data-explorer-object class="explorer-object" style="transform:translate(160px,265px)"></g><g data-explorer-image class="explorer-image" style="transform:translate(640px,265px)"></g>${text(250,337,'OBJECT · ABC','explorer-caption')}${text(740,337,'IMAGE · DEF','explorer-caption')}`,'0 0 960 365')}</figure>
-        <div class="explorer-tools"><button class="quiet-button" type="button" data-explorer-overlay aria-pressed="false">Overlay triangles</button><div class="explorer-scales" role="group" aria-label="Image scale factor" data-explorer-scales hidden>${[0.5,1,1.5].map(k=>`<button type="button" data-explorer-scale="${k}" aria-pressed="${k===1.5}">k = ${k===0.5?'½':k}</button>`).join('')}</div><button class="text-button" type="button" data-explorer-reset>Reset</button></div><p class="explorer-legend">Thick sides and marked angles show the given evidence.</p></div>
+        <div class="explorer-visual"><figure class="explorer-figure">${svg('Object ABC and image DEF. Compare corresponding sides and angles.',`<g data-explorer-object class="explorer-object"></g><g data-explorer-image class="explorer-image"></g>${text(217.5,320,'OBJECT · ABC','explorer-caption')}${text(572.5,320,'IMAGE · DEF','explorer-caption')}`,'0 0 800 335').replace('<svg ','<svg id="explorer-diagram" ' )}</figure>
+        <div class="explorer-tools"><button class="quiet-button" type="button" data-explorer-overlay aria-pressed="false">Overlay triangles</button><div class="explorer-scales" role="group" aria-label="Image scale factor" data-explorer-scales hidden>${[1,2,3].map(k=>`<button type="button" data-explorer-scale="${k}" aria-pressed="${k===2}">k = ${k}</button>`).join('')}</div><button class="text-button" type="button" data-explorer-reset>Reset</button></div><p class="explorer-legend">Click a condition on the right to highlight its matching parts.</p></div>
         <aside class="explorer-explanation" aria-live="polite" data-explorer-explanation></aside>
       </div><p class="explorer-takeaway"><strong>Congruent:</strong> equal sides, k = 1. <strong>Similar:</strong> proportional sides. <mark>Both have equal corresponding angles.</mark></p>
     </div>`;
   }
-  function updateExplorer({rebuildPicker=false,focusTest=false}={}) {
+  function updateExplorer({rebuildPicker=false,focusTest=false,resetFocus=false}={}) {
     const scene=document.querySelector('.scene-testExplorer');if(!scene)return;
     if(!explorerKeys().includes(explorer.test))explorer.test=explorer.test==='aa'?'asa':'aa';
     const picker=scene.querySelector('[data-test-picker]');
     if(rebuildPicker||!picker.children.length)picker.innerHTML=explorerKeys().map(key=>`<button type="button" id="test-${key}-tab" role="tab" data-explorer-test="${key}" aria-selected="${key===explorer.test}" aria-controls="test-evidence-panel" tabindex="${key===explorer.test?0:-1}">${explorerTests[key].label}</button>`).join('');
     picker.querySelectorAll('button').forEach(b=>{const selected=b.dataset.explorerTest===explorer.test;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;if(selected&&focusTest)b.focus();});
     const evidence=explorerEvidence();
+    if(resetFocus)explorer.focus=explorer.test==='shape'?0:Math.max(0,evidence.facts.findIndex(f=>f.angles.length));
+    if(explorer.focus!==null&&!evidence.facts[explorer.focus])explorer.focus=0;
     const object=scene.querySelector('[data-explorer-object]'),image=scene.querySelector('[data-explorer-image]');
     const narrow=window.matchMedia('(max-width:52rem)').matches;
     const graphic=scene.querySelector('.explorer-figure svg');
-    graphic.setAttribute('viewBox',narrow?`0 0 480 ${explorer.overlay?365:700}`:'0 0 960 365');
-    object.style.transform=`translate(160px,${narrow&&!explorer.overlay?230:265}px)`;
-    object.innerHTML=explorerTriangle('ABC');image.innerHTML=explorerTriangle('DEF',evidence.k);
-    image.style.transform=`translate(${explorer.overlay||narrow?160:640}px,${narrow&&!explorer.overlay?530:265}px) scale(${evidence.k})`;
+    const k=evidence.k,baseline=Math.max(245,168.75*k+50);
+    const width=explorer.overlay||narrow?Math.max(420,225*k+180):800+225*(k-1);
+    const objectY=narrow&&!explorer.overlay?225:baseline;
+    const imageY=narrow&&!explorer.overlay?Math.max(500,330+168.75*k):baseline;
+    graphic.setAttribute('viewBox',`0 0 ${width} ${imageY+90}`);
+    object.style.transform=`translate(105px,${objectY}px)`;
+    object.innerHTML=explorerTriangle('ABC');image.innerHTML=explorerTriangle('DEF',k);
+    image.style.transform=`translate(${explorer.overlay||narrow?105:460}px,${imageY}px) scale(${k})`;
     const captions=scene.querySelectorAll('.explorer-caption');
     captions[0].textContent=explorer.overlay?'OBJECT + IMAGE':'OBJECT · ABC';
-    captions[0].setAttribute('y',narrow&&!explorer.overlay?315:337);
-    captions[1].setAttribute('x',narrow?250:740);captions[1].setAttribute('y',narrow?650:337);
+    captions[0].setAttribute('x',217.5);captions[0].setAttribute('y',objectY+75);
+    captions[1].setAttribute('x',(narrow?105:460)+112.5*k);captions[1].setAttribute('y',imageY+75);
     captions[1].style.opacity=explorer.overlay?'0':'1';
-    image.style.setProperty('--triangle-scale',evidence.k);
+    image.style.setProperty('--triangle-scale',k);
     scene.classList.toggle('is-overlaid',explorer.overlay);
-    scene.querySelector('.explorer-figure svg').setAttribute('aria-label',`${evidence.result}. ${evidence.heading} Scale factor ${evidence.k}. ${evidence.note}`);
+    const focused=explorer.focus===null?null:evidence.facts[explorer.focus];
+    graphic.setAttribute('aria-label',`${evidence.result}. ${evidence.heading} Scale factor ${k}.${focused?' Highlighted condition: '+focused.label+'.':''}`);
     scene.querySelector('#test-evidence-panel').setAttribute('aria-labelledby',`test-${explorer.test}-tab`);
     scene.querySelectorAll('[data-relationship]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.relationship===explorer.mode)));
     scene.querySelector('[data-explorer-scales]').hidden=explorer.mode==='congruent';
     scene.querySelectorAll('[data-explorer-scale]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.explorerScale)===explorer.scale)));
     const overlay=scene.querySelector('[data-explorer-overlay]');overlay.setAttribute('aria-pressed',String(explorer.overlay));overlay.textContent=explorer.overlay?'Separate triangles':'Overlay triangles';
-    scene.querySelector('[data-explorer-explanation]').innerHTML=`<span class="eyebrow">${explorer.test==='shape'?'The difference':esc(explorerTests[explorer.test].label)+' evidence'}</span><h3>${esc(evidence.heading)}</h3><p>${esc(evidence.detail)}</p><div class="explorer-facts">${evidence.facts.map(f=>`<p>${esc(f)}</p>`).join('')}</div><p class="explorer-note">${esc(evidence.note)}</p><p class="explorer-result">${esc(evidence.result)}<span>k = ${format(evidence.k)}${explorer.mode==='similar'&&evidence.k===1?' · also congruent':''}</span></p>`;
+    scene.querySelector('[data-explorer-explanation]').innerHTML=`<span class="eyebrow">${explorer.test==='shape'?'The difference':esc(explorerTests[explorer.test].label)+' evidence'}</span><h3>${esc(evidence.heading)}</h3><p>${esc(evidence.detail)}</p><div class="explorer-facts" role="group" aria-label="Highlight a corresponding condition">${evidence.facts.map((f,i)=>`<button type="button" class="condition-button" data-explorer-condition="${i}" aria-pressed="${explorer.focus===i}" aria-controls="explorer-diagram"><span aria-hidden="true">${explorer.focus===i?'●':'○'}</span>${esc(f.label)}</button>`).join('')}<button class="condition-all" type="button" data-explorer-condition="all" aria-pressed="${explorer.focus===null}" aria-controls="explorer-diagram">Show all conditions</button></div>${['aa','shape'].includes(explorer.test)?`<p class="explorer-note">${esc(evidence.note)}</p>`:''}<p class="explorer-result">${esc(evidence.result)}<span>k = ${format(k)}${explorer.mode==='similar'&&k===1?' · also congruent':''}</span></p>`;
   }
   function comparison(s) {
     return `<div class="scene-inner comparison-layout">${title(s)}
@@ -291,11 +319,12 @@
   document.addEventListener('click',e=>{
     const referenceTab=e.target.closest('[data-comparison-view]');
     if(referenceTab){setComparisonView(referenceTab.dataset.comparisonView);return;}
-    const mode=e.target.closest('[data-relationship]');if(mode){explorer.mode=mode.dataset.relationship;updateExplorer({rebuildPicker:true});return;}
-    const test=e.target.closest('[data-explorer-test]');if(test){explorer.test=test.dataset.explorerTest;updateExplorer();return;}
+    const mode=e.target.closest('[data-relationship]');if(mode){explorer.mode=mode.dataset.relationship;updateExplorer({rebuildPicker:true,resetFocus:true});return;}
+    const test=e.target.closest('[data-explorer-test]');if(test){explorer.test=test.dataset.explorerTest;updateExplorer({resetFocus:true});return;}
+    const fact=e.target.closest('[data-explorer-condition]');if(fact){explorer.focus=fact.dataset.explorerCondition==='all'?null:Number(fact.dataset.explorerCondition);updateExplorer();document.querySelector(`[data-explorer-condition="${fact.dataset.explorerCondition}"]`).focus({preventScroll:true});return;}
     const scale=e.target.closest('[data-explorer-scale]');if(scale){explorer.scale=Number(scale.dataset.explorerScale);updateExplorer();return;}
     if(e.target.closest('[data-explorer-overlay]')){explorer.overlay=!explorer.overlay;updateExplorer();return;}
-    if(e.target.closest('[data-explorer-reset]')){Object.assign(explorer,{mode:'congruent',test:'shape',scale:1.5,overlay:false});updateExplorer({rebuildPicker:true});return;}
+    if(e.target.closest('[data-explorer-reset]')){Object.assign(explorer,{mode:'congruent',test:'shape',scale:2,overlay:false,focus:null});updateExplorer({rebuildPicker:true});return;}
     const choice=e.target.closest('[data-q-option]');if(choice){states[current].value=choice.dataset.qOption;states[current].checked=false;states[current].correct=false;updateQuiz();}
     const jump=e.target.closest('[data-q-index]');if(jump){current=Number(jump.dataset.qIndex);updateQuiz();}
     const button=e.target.closest('[data-q-action]');if(!button)return;
@@ -328,7 +357,7 @@
       e.preventDefault();e.stopPropagation();
       const keys=explorerKeys(),index=keys.indexOf(explorer.test);
       const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(index+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;
-      explorer.test=keys[next];updateExplorer({focusTest:true});
+      explorer.test=keys[next];updateExplorer({focusTest:true,resetFocus:true});
     });
     document.querySelector('.comparison-mode-tabs')?.addEventListener('keydown',e=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;

@@ -288,7 +288,7 @@ svg .aaa-angle { font-size: 29px; dominant-baseline: central; stroke-width: 4px;
 .test-picker { display: flex; gap: .5rem; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: .65rem; }
 .test-picker button { border: 1px solid var(--line); min-height: 2.8rem; padding: .55rem 1.1rem; background: var(--paper); font-weight: 850; font-size: 1.1rem; cursor: pointer; }
 .test-picker [aria-selected="true"] { background: var(--sale); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
-.explorer-stage { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(17rem,1fr); gap: 2rem; align-items: center; }
+.explorer-stage { display: grid; grid-template-columns: minmax(0,2fr) minmax(17rem,.95fr); gap: 2rem; align-items: center; }
 .explorer-visual { min-width: 0; }
 .explorer-figure { margin: 0; }
 .explorer-figure svg { display: block; width: 100%; overflow: visible; }
@@ -313,7 +313,7 @@ svg .explorer-edge.is-evidence { stroke-width: 4; opacity: 1; }
 .explorer-tools { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .65rem; }
 .explorer-tools .text-button { margin-left: auto; }
 .explorer-tools [aria-pressed="true"] { background: var(--sale); }
-.explorer-tools .quiet-button,.explorer-scales button { width: auto; font-size: 1rem; }
+.explorer-tools .quiet-button,.explorer-scales button { width: auto; padding: .5rem .7rem; font-size: 1rem; }
 .explorer-scales { display: flex; gap: .4rem; }
 .explorer-scales button { border: 1px solid var(--ink); background: var(--paper); min-height: 2.75rem; padding: .45rem .65rem; font-weight: 800; cursor: pointer; }
 .explorer-legend { font-size: 1rem; color: var(--ink-soft); margin: .65rem 0 0; }
@@ -321,10 +321,26 @@ svg .explorer-edge.is-evidence { stroke-width: 4; opacity: 1; }
 .explorer-explanation .eyebrow { margin-bottom: .6rem; }
 .explorer-explanation h3 { font-size: clamp(1.8rem,2.35vw,2.65rem); line-height: 1.06; }
 .explorer-explanation > p { margin: .8rem 0 0; font-size: clamp(1.15rem,1.4vw,1.45rem); line-height: 1.35; }
-.explorer-facts { margin-top: 1.1rem; border-top: 1px solid var(--line); padding-top: .6rem; }
-.explorer-facts p { margin: .4rem 0; font-size: clamp(1.1rem,1.4vw,1.45rem); font-weight: 850; line-height: 1.4; }
+.explorer-facts { display: grid; gap: .4rem; margin-top: .8rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.condition-button { display: flex; align-items: center; gap: .6rem; width: 100%; min-height: 2.8rem; border: 1px solid var(--line); padding: .5rem .65rem; background: var(--paper); color: var(--ink); text-align: left; font: 800 clamp(1.05rem,1.3vw,1.35rem)/1.25 var(--font-body); cursor: pointer; }
+.condition-button > span { color: var(--ink-soft); font-size: .9em; }
+.condition-button:hover { border-color: var(--ink); background: var(--paper-deep); }
+.condition-button[aria-pressed="true"] { border: 2px solid var(--tomato-dark); background: var(--sale); color: var(--tomato-dark); padding: calc(.5rem - 1px) calc(.65rem - 1px); }
+.condition-button[aria-pressed="true"] > span { color: var(--tomato-dark); }
+.condition-button:focus-visible,.condition-all:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.condition-all { justify-self: start; min-height: 2.5rem; border: 0; background: none; color: var(--ink-soft); padding: .35rem 0; text-decoration: underline; text-underline-offset: .2em; font: 750 1rem/1.25 var(--font-body); cursor: pointer; }
+.condition-all[aria-pressed="true"] { color: var(--ink); }
+.explorer-figure .condition-edge-halo { stroke: var(--sale); stroke-width: 16; opacity: .85; vector-effect: non-scaling-stroke; }
+.explorer-figure .explorer-edge.is-focused { stroke: var(--tomato-dark); stroke-width: 7; opacity: 1; }
+.explorer-figure .explorer-ticks.is-focused .equality-tick { stroke: var(--tomato-dark); stroke-width: 3; }
+.explorer-figure .explorer-angle.is-focused path { stroke: var(--tomato-dark); stroke-width: 5; }
+.explorer-figure .explorer-angle.is-focused .condition-sector { fill: color-mix(in oklch,var(--tomato) 32%,transparent); stroke: none; }
+.explorer-figure text.is-focused { fill: var(--tomato-dark); font-weight: 900; }
+.explorer-figure .is-dimmed { opacity: .2; animation: none; }
+.explorer-figure .is-focused { animation: condition-emphasis 550ms ease-out; }
+@keyframes condition-emphasis { from { opacity: .35; } to { opacity: 1; } }
 .explorer-explanation .explorer-note { font-size: 1.1rem; color: var(--ink-soft); }
-.explorer-explanation .explorer-result { font-size: clamp(1.8rem,2.25vw,2.5rem); font-weight: 900; color: var(--tomato-dark); }
+.explorer-explanation .explorer-result { font-size: clamp(1.65rem,2vw,2.2rem); font-weight: 900; color: var(--tomato-dark); }
 .explorer-result span { display: block; margin-top: .4rem; color: var(--ink); font-size: 1.15rem; }
 .explorer-takeaway { margin: 0; border-top: 2px solid var(--ink); padding-top: .85rem; font-size: clamp(1.1rem,1.4vw,1.4rem); line-height: 1.5; }
 .explorer-takeaway > strong + strong { margin-left: .6rem; }
@@ -364,7 +380,7 @@ svg .explorer-edge.is-evidence { stroke-width: 4; opacity: 1; }
 }
 @media (prefers-reduced-motion:reduce) {
   .explorer-image { transition: none; }
-  .explorer-figure .is-evidence { animation: none; }
+  .explorer-figure .is-evidence,.explorer-figure .is-focused { animation: none; }
 }
 @media print {
   .explorer-layout { grid-template-rows: auto auto 1fr auto; gap: 1rem; }
@@ -374,8 +390,11 @@ svg .explorer-edge.is-evidence { stroke-width: 4; opacity: 1; }
   .explorer-stage { grid-row: 3; }
   .explorer-takeaway { grid-row: 4; }
   .explorer-figure svg { width: 100%; }
-  .explorer-figure .is-evidence { animation: none; }
+  .explorer-figure .is-evidence,.explorer-figure .is-focused { animation: none; }
   .explorer-image { transition: none; }
+  .condition-button { display: flex !important; border: 0 !important; color: var(--ink) !important; background: none !important; }
+  .condition-button > span,.condition-all { display: none !important; }
+  .explorer-figure .is-dimmed { opacity: 1; }
   .warmup-figure svg { height: 46mm; }
   .scene-quiz .quiz-layout { display: grid; grid-template-rows: auto 1fr; }
   .scene-quiz .quiz-body,.scene-quiz .quiz-footnote { display: none; }

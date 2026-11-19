@@ -37,7 +37,8 @@ The build copies and syntax-checks eight static assets into `dist/`. No textbook
 | Teacher notes | N or Notes; Esc to close |
 | Full-screen presentation | Present |
 | Highlight test evidence | Slide 3: Congruent / Similar, then a test button |
-| Compare object and image | Slide 3: Overlay triangles; similar scale factors ½, 1 and 1.5 |
+| Compare object and image | Slide 3: Overlay triangles; similar scale factors 1, 2 and 3 |
+| Highlight a condition | Slide 3: click a side or angle condition on the right; Show all conditions restores all evidence |
 | Reset the visual recap | Slide 3: Reset |
 | Practice | Slide 5: six numbered questions, each with hint and solution |
 | Check a numeric answer | Check answer or Enter |
@@ -62,7 +63,7 @@ For Vercel: Framework `Other`, build command `npm run build`, output directory `
 - Every congruent triangle pair is also similar with k = 1. Rotation and reflection preserve congruence.
 - Scale factor consistently means image side length divided by object side length.
 - The visual recap offers congruent SSS, SAS, ASA, AAS and RHS, and similar SSS, SAS, AA/AAA and RHS. Highlighting identifies the evidence required; unmarked edges only show the outline.
-- Object is the original triangle; image is the transformed triangle. The image can overlap the object, with scale presets showing reduction, equal size and enlargement. In both relationships, corresponding angles stay equal.
+- Object is the original triangle; image is the transformed triangle. The image can overlap the object, with integer scale factors 1, 2 and 3. Clicking an individual condition highlights the matching sides or angles in both triangles in red and fades other evidence. In both relationships, corresponding angles stay equal.
 - Practice covers SSS, SAS and RHS congruence, AA/AAA similarity, reduction by 2/3 and a missing image side of 17.5 cm.
 - Printing shows all six practice solutions as an answer key on the practice slide.
 - Numeric inputs accept finite decimal or fraction values; an edited answer must be checked again. Revealing a solution does not earn a solved mark.
