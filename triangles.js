@@ -139,33 +139,93 @@
     return svg('A blue triangle and a turned red copy. Are they congruent or similar?',polygon([[90,250],[255,250],[90,126]],'object-shape')+polygon([[545,104],[380,104],[545,228]],'image-shape')+right(90,250)+right(545,104,-1,1)+text(320,187,'≡ or ∼ ?','cover-symbol'),'0 50 650 270');
   }
   const title = s=>`<header class="scene-heading"><p class="eyebrow">${esc(s.eyebrow)}</p><h2>${esc(s.title)}</h2></header>`;
-  function triangleLab(s) {
-    return `<div class="scene-inner triangle-lab-layout">${title(s)}<p class="slide-instruction">${esc(s.prompt)}</p><div class="triangle-lab-stage"><figure class="math-figure"><div data-triangle-canvas></div><figcaption>Corresponding sides keep their colours. Rotation and reflection do not change lengths.</figcaption></figure><div class="triangle-controls"><span class="eyebrow">Object → image</span><output data-tri-factor>k = 1</output><label for="triangleScale">Scale factor</label><input id="triangleScale" type="range" min="0.5" max="2" step="0.25" value="1" aria-label="Triangle scale factor"><div class="triangle-presets">${[0.5,1,1.5,2].map(k=>`<button type="button" data-tri-scale="${k}" aria-pressed="${k===1}">×${k}</button>`).join('')}</div><label for="triangleRotation">Rotation <span data-tri-degrees>0°</span></label><input id="triangleRotation" type="range" min="-180" max="180" step="15" value="0" aria-label="Triangle rotation"><div class="triangle-tools"><button class="quiet-button" type="button" data-tri-reflect aria-pressed="false">Reflect</button><button class="text-button" type="button" data-tri-reset>Reset</button></div><p class="triangle-verdict" aria-live="polite" data-tri-verdict></p><p class="triangle-measures" data-tri-measures></p></div></div><p class="takeaway"><span>KEY IDEA</span><strong>Both: equal corresponding angles. Congruent: equal sides. Similar: proportional sides.</strong></p></div>`;
+  const explorerTests={
+    shape:{label:'Shape & size',edges:[0,1,2],angles:[0,1,2]},
+    sss:{label:'SSS',edges:[0,1,2],angles:[]},
+    sas:{label:'SAS',edges:[0,2],angles:[0]},
+    asa:{label:'ASA',edges:[0],angles:[0,1]},
+    aas:{label:'AAS',edges:[1],angles:[0,1]},
+    rhs:{label:'RHS',edges:[1,2],angles:[0]},
+    aa:{label:'AA / AAA',edges:[],angles:[0,1]}
+  };
+  const explorer={mode:'congruent',test:'shape',scale:1.5,overlay:false};
+  const explorerKeys=()=>explorer.mode==='congruent'?['shape','sss','sas','asa','aas','rhs']:['shape','sss','sas','aa','rhs'];
+  const format=n=>Number(n.toFixed(2)).toString();
+  function explorerEvidence() {
+    const congruent=explorer.mode==='congruent',k=congruent?1:explorer.scale;
+    const equal=congruent?'equal':'in the same ratio';
+    const result=congruent?'△ABC ≡ △DEF':'△ABC ∼ △DEF';
+    const evidence={
+      shape:{heading:congruent?'Same shape. Same size.':'Same shape. Size may differ.',detail:congruent?'Corresponding sides are equal.':'Every corresponding side uses the same multiplier.',facts:congruent?['AB = DE   AC = DF   BC = EF','Corresponding angles are equal.']:[`DE/AB = DF/AC = EF/BC = ${format(k)}`,'Corresponding angles are equal.'],note:congruent?'A turn or reflection also preserves congruence.':k===1?'At k = 1, these triangles are also congruent.':'Angles stay equal when side lengths change.'},
+      sss:{heading:congruent?'Three equal side pairs':'Three side pairs in one ratio',detail:`All three corresponding side pairs are ${equal}.`,facts:congruent?['AB = DE   AC = DF   BC = EF']:[`6/4 = 4.5/3 = 7.5/5 = 1.5`],note:'Check all three pairs.'},
+      sas:{heading:congruent?'Two sides and the included angle':'Two side ratios and the included angle',detail:`Two corresponding side pairs are ${equal}.`,facts:[congruent?'AB = DE   AC = DF':`DE/AB = DF/AC = ${format(k)}`,'∠A = ∠D = 90°'],note:'The equal angle must lie between the two given sides.'},
+      asa:{heading:'Two angles and the side between',detail:'Two equal angle pairs and their included equal side.',facts:['∠A = ∠D   ∠B = ∠E','AB = DE'],note:'The highlighted side joins the two marked angles.'},
+      aas:{heading:'Two angles and another side',detail:'Two equal angle pairs and an equal corresponding side.',facts:['∠A = ∠D   ∠B = ∠E','BC = EF'],note:'The highlighted side is not between the two marked angles.'},
+      rhs:{heading:congruent?'Right angle, hypotenuse, side':'Right angle and two side ratios',detail:congruent?'Equal hypotenuses and one equal matching leg.':'Hypotenuses and one matching leg have the same ratio.',facts:['∠A = ∠D = 90°',congruent?'BC = EF   AC = DF':`EF/BC = DF/AC = ${format(k)}`],note:'The hypotenuse lies opposite the right angle.'},
+      aa:{heading:'Two equal angle pairs',detail:'Two matching angles establish similarity.',facts:['∠A = ∠D   ∠B = ∠E','The third angle pair must also be equal.'],note:'AA / AAA fixes shape. It does not fix size.'}
+    }[explorer.test];
+    if(explorer.test==='sss'&&!congruent)evidence.facts=[`${format(4*k)}/4 = ${format(3*k)}/3 = ${format(5*k)}/5 = ${format(k)}`];
+    return {...evidence,k,result};
   }
-  function updateTriangle() {
-    const scene=document.querySelector('.scene-triangleLab');if(!scene)return;
-    const k=Number(scene.querySelector('#triangleScale').value),r=Number(scene.querySelector('#triangleRotation').value),reflect=scene.querySelector('[data-tri-reflect]').getAttribute('aria-pressed')==='true';
-    const base=[[-4/3,1],[8/3,1],[-4/3,-2]];
-    const make=(cx,scale,rot,flip,letters)=>{
-      const a=rot*Math.PI/180;
-      const pts=base.map(([x,y])=>{x*=flip?-1:1;return [cx+(x*Math.cos(a)-y*Math.sin(a))*48*scale,205+(x*Math.sin(a)+y*Math.cos(a))*48*scale];});
-      let b=polygon(pts);
-      const e=[[0,2,'edge-a',3],[0,1,'edge-b',4],[1,2,'edge-c',5]];
-      for(const [j,z,cls,length]of e){b+=line(pts[j],pts[z],cls);const mx=(pts[j][0]+pts[z][0])/2,my=(pts[j][1]+pts[z][1])/2,dx=mx-cx,dy=my-205,n=Math.hypot(dx,dy)||1;b+=text(mx+dx/n*26,my+dy/n*26+7,Number((length*scale).toFixed(2)),'lab-side-label');}
-      pts.forEach((p,i)=>{const dx=p[0]-cx,dy=p[1]-205,n=Math.hypot(dx,dy);b+=text(p[0]+dx/n*23,p[1]+dy/n*23+6,letters[i],'lab-vertex');});
-      // Right-angle marker transforms with the triangle; labels remain upright.
-      const u=[(pts[1][0]-pts[0][0])/(192*scale),(pts[1][1]-pts[0][1])/(192*scale)],v=[(pts[2][0]-pts[0][0])/(144*scale),(pts[2][1]-pts[0][1])/(144*scale)];
-      const mark=[pts[0].map((x,i)=>x+u[i]*13),pts[0].map((x,i)=>x+(u[i]+v[i])*13),pts[0].map((x,i)=>x+v[i]*13)];
-      b+=`<polyline points="${mark.map(v=>v.join(',')).join(' ')}" class="lab-right"/>`;
-      return b;
-    };
-    // The image has its own spacious viewBox so every rotation fits at k = 2.
-    scene.querySelector('[data-triangle-canvas]').innerHTML=`<div class="triangle-canvases">${svg('Object ABC, a 3-4-5 triangle.',make(230,1,0,false,'ABC')+text(230,-70,'OBJECT · ABC','shape-tag'),'-90 -110 640 640')}${svg(`Image DEF: scale factor ${k}, rotation ${r} degrees${reflect?', reflected':''}.`,make(230,k,r,reflect,'DEF')+text(230,-70,'IMAGE · DEF','shape-tag'),'-90 -110 640 640')}</div>`;
-    scene.querySelector('[data-tri-factor]').textContent=`k = ${k}`;
-    scene.querySelector('[data-tri-degrees]').textContent=`${r}°`;
-    scene.querySelector('[data-tri-verdict]').innerHTML=k===1?'△ABC ≡ △DEF<br><small>Congruent — and also similar.</small>':'△ABC ∼ △DEF<br><small>Similar, with a different size.</small>';
-    scene.querySelector('[data-tri-measures]').textContent=`3 → ${3*k}  ·  4 → ${4*k}  ·  5 → ${5*k}`;
-    scene.querySelectorAll('[data-tri-scale]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.triScale)===k)));
+  function explorerTriangle(letters,k=1) {
+    const points=[[0,0],[180,0],[0,-135]],test=explorerTests[explorer.test];
+    const edges=[[0,1,4],[1,2,5],[2,0,3]],labelPoints=[[90,31/k],[90+27/k,-67.5-17/k],[-29/k,-67.5]];
+    let body=polygon(points,'explorer-fill');
+    edges.forEach(([a,b,length],i)=>{
+      const active=test.edges.includes(i),cls=`explorer-edge evidence-${i}${active?' is-evidence':''}`;
+      body+=line(points[a],points[b],cls);
+      if(active) {
+        const pos=labelPoints[i],anchor=i===2?'end':'middle';
+        body+=text(pos[0],pos[1],`${format(length*k)} cm`,'explorer-length',anchor);
+        if(explorer.mode==='congruent')body+=`<g class="explorer-ticks evidence-${i}">${ticks(points[a],points[b],i+1)}</g>`;
+      }
+    });
+    test.angles.forEach(i=>{
+      let arc=i===0?`<path d="M ${17/k} 0 v ${-17/k} h ${-17/k}"/>`:angleAt(points,i,'',{radius:25/k})+(i===1?angleAt(points,i,'',{radius:31/k}):angleAt(points,i,'',{radius:31/k})+angleAt(points,i,'',{radius:37/k}));
+      body+=`<g class="explorer-angle is-evidence">${arc}</g>`;
+    });
+    [[-18/k,22/k],[180+22/k,12/k],[-13/k,-135-18/k]].forEach((p,i)=>body+=text(p[0],p[1],letters[i],'explorer-vertex'));
+    return body;
+  }
+  function testExplorer(s) {
+    return `<div class="scene-inner explorer-layout">${title(s)}
+      <div class="explorer-topline"><div class="relationship-switch" role="group" aria-label="Compare relationships"><button type="button" data-relationship="congruent" aria-pressed="true">Congruent <span>≡</span></button><button type="button" data-relationship="similar" aria-pressed="false">Similar <span>∼</span></button></div><p>Object = original triangle. Image = transformed triangle.</p></div>
+      <div class="test-picker" role="tablist" aria-label="Triangle tests" data-test-picker></div>
+      <div class="explorer-stage" id="test-evidence-panel" role="tabpanel" aria-labelledby="test-shape-tab">
+        <div class="explorer-visual"><figure class="explorer-figure">${svg('Object ABC and image DEF. Compare corresponding sides and angles.',`<g data-explorer-object class="explorer-object" style="transform:translate(160px,265px)"></g><g data-explorer-image class="explorer-image" style="transform:translate(640px,265px)"></g>${text(250,337,'OBJECT · ABC','explorer-caption')}${text(740,337,'IMAGE · DEF','explorer-caption')}`,'0 0 960 365')}</figure>
+        <div class="explorer-tools"><button class="quiet-button" type="button" data-explorer-overlay aria-pressed="false">Overlay triangles</button><div class="explorer-scales" role="group" aria-label="Image scale factor" data-explorer-scales hidden>${[0.5,1,1.5].map(k=>`<button type="button" data-explorer-scale="${k}" aria-pressed="${k===1.5}">k = ${k===0.5?'½':k}</button>`).join('')}</div><button class="text-button" type="button" data-explorer-reset>Reset</button></div><p class="explorer-legend">Thick sides and marked angles show the given evidence.</p></div>
+        <aside class="explorer-explanation" aria-live="polite" data-explorer-explanation></aside>
+      </div><p class="explorer-takeaway"><strong>Congruent:</strong> equal sides, k = 1. <strong>Similar:</strong> proportional sides. <mark>Both have equal corresponding angles.</mark></p>
+    </div>`;
+  }
+  function updateExplorer({rebuildPicker=false,focusTest=false}={}) {
+    const scene=document.querySelector('.scene-testExplorer');if(!scene)return;
+    if(!explorerKeys().includes(explorer.test))explorer.test=explorer.test==='aa'?'asa':'aa';
+    const picker=scene.querySelector('[data-test-picker]');
+    if(rebuildPicker||!picker.children.length)picker.innerHTML=explorerKeys().map(key=>`<button type="button" id="test-${key}-tab" role="tab" data-explorer-test="${key}" aria-selected="${key===explorer.test}" aria-controls="test-evidence-panel" tabindex="${key===explorer.test?0:-1}">${explorerTests[key].label}</button>`).join('');
+    picker.querySelectorAll('button').forEach(b=>{const selected=b.dataset.explorerTest===explorer.test;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;if(selected&&focusTest)b.focus();});
+    const evidence=explorerEvidence();
+    const object=scene.querySelector('[data-explorer-object]'),image=scene.querySelector('[data-explorer-image]');
+    const narrow=window.matchMedia('(max-width:52rem)').matches;
+    const graphic=scene.querySelector('.explorer-figure svg');
+    graphic.setAttribute('viewBox',narrow?`0 0 480 ${explorer.overlay?365:700}`:'0 0 960 365');
+    object.style.transform=`translate(160px,${narrow&&!explorer.overlay?230:265}px)`;
+    object.innerHTML=explorerTriangle('ABC');image.innerHTML=explorerTriangle('DEF',evidence.k);
+    image.style.transform=`translate(${explorer.overlay||narrow?160:640}px,${narrow&&!explorer.overlay?530:265}px) scale(${evidence.k})`;
+    const captions=scene.querySelectorAll('.explorer-caption');
+    captions[0].textContent=explorer.overlay?'OBJECT + IMAGE':'OBJECT · ABC';
+    captions[0].setAttribute('y',narrow&&!explorer.overlay?315:337);
+    captions[1].setAttribute('x',narrow?250:740);captions[1].setAttribute('y',narrow?650:337);
+    captions[1].style.opacity=explorer.overlay?'0':'1';
+    image.style.setProperty('--triangle-scale',evidence.k);
+    scene.classList.toggle('is-overlaid',explorer.overlay);
+    scene.querySelector('.explorer-figure svg').setAttribute('aria-label',`${evidence.result}. ${evidence.heading} Scale factor ${evidence.k}. ${evidence.note}`);
+    scene.querySelector('#test-evidence-panel').setAttribute('aria-labelledby',`test-${explorer.test}-tab`);
+    scene.querySelectorAll('[data-relationship]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.relationship===explorer.mode)));
+    scene.querySelector('[data-explorer-scales]').hidden=explorer.mode==='congruent';
+    scene.querySelectorAll('[data-explorer-scale]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.explorerScale)===explorer.scale)));
+    const overlay=scene.querySelector('[data-explorer-overlay]');overlay.setAttribute('aria-pressed',String(explorer.overlay));overlay.textContent=explorer.overlay?'Separate triangles':'Overlay triangles';
+    scene.querySelector('[data-explorer-explanation]').innerHTML=`<span class="eyebrow">${explorer.test==='shape'?'The difference':esc(explorerTests[explorer.test].label)+' evidence'}</span><h3>${esc(evidence.heading)}</h3><p>${esc(evidence.detail)}</p><div class="explorer-facts">${evidence.facts.map(f=>`<p>${esc(f)}</p>`).join('')}</div><p class="explorer-note">${esc(evidence.note)}</p><p class="explorer-result">${esc(evidence.result)}<span>k = ${format(evidence.k)}${explorer.mode==='similar'&&evidence.k===1?' · also congruent':''}</span></p>`;
   }
   function comparison(s) {
     return `<div class="scene-inner comparison-layout">${title(s)}
@@ -210,38 +270,34 @@
     });
   }
   const questions=[
-    {level:'Core',title:'Read the side evidence',prompt:'Use only the labelled lengths. Which test establishes congruence?',visual:congruent('sss'),options:['SSS','SAS','AAA'],answer:0,hint:'How many complete pairs of side lengths are given?',solution:'SSS: AB = DE, AC = DF and BC = EF. All three corresponding side pairs are equal.'},
-    {level:'Core',title:'Locate the included angle',prompt:'Which test uses the two given sides and the marked angle?',visual:congruent('sas'),options:['RHS','SAS','SSA'],answer:1,hint:'The marked angle is between the two known sides. Is a hypotenuse length given?',solution:'SAS: two side pairs are equal and the included angles are both 90°. RHS is not supported by the marked evidence because no hypotenuse length is given.'},
-    {level:'Core',title:'Use angles and a side',prompt:'Which test uses the two marked angles and the given side?',visual:congruent('aas'),options:['AAA only','SSS','AAS'],answer:2,hint:'Angles fix the shape. The equal corresponding side also fixes the size.',solution:'AAS: angles A and D match, angles B and E match, and BC = EF. The given side is not between the two given angles.'},
-    {level:'Core',title:'Find the hypotenuse first',prompt:'Which test is supported by these right angles and labelled lengths?',visual:congruent('rhs'),options:['SAS','AAA','RHS'],answer:2,hint:'The side opposite the right angle is the hypotenuse.',solution:'RHS: both triangles are right-angled, BC = EF (hypotenuses) and AC = DF (matching legs). The right angle is not between the two labelled sides, so this is not SAS evidence.'},
-    {level:'Develop',title:'Match the angle, not its position',prompt:'The triangles are congruent. Find the marked angle ∠Q.',condition:'△ABC ≡ △QPR',visual:practiceDiagram('congruentAngle'),answer:48,unit:'°',hint:'Use the first letters of the congruence statement: A corresponds to Q.',solution:'A ↔ Q, B ↔ P, C ↔ R. Corresponding angles are equal, so ∠Q = 48°.'},
-    {level:'Develop',title:'Find an angle in a similar triangle',prompt:'Find the marked angle ∠N. Use the angle sum in △ABC first.',condition:'△ABC ∼ △LMN',visual:practiceDiagram('similarAngle'),answer:65,unit:'°',hint:'N corresponds to C. Find C using the angle sum before transferring it.',solution:'∠C = 180° − 42° − 73° = 65°. Since C ↔ N, ∠N = 65°. Similarity does not scale angles.'},
-    {level:'Develop',title:'Find the reduction factor',prompt:'Find k for object → image. You can enter a fraction.',visual:practiceDiagram('scale'),answer:2/3,unit:'',hint:'Use image ÷ object. This is a reduction.',solution:'k = 8 ÷ 12 = 2/3. The reverse direction would have scale factor 3/2.'},
-    {level:'Develop',title:'Find a missing image side',prompt:'Use the marked lengths to find EF.',condition:'△ABC ∼ △DEF',visual:practiceDiagram('missing'),answer:17.5,unit:'cm',hint:'AB ↔ DE gives the scale factor. BC ↔ EF gives the unknown side.',solution:'k = DE / AB = 10 / 4 = 2.5. EF = BC × k = 7 × 2.5 = 17.5 cm.'},
-    {level:'Challenge',title:'What does the evidence guarantee?',prompt:'Two triangles have the same three angles. Which conclusion is guaranteed?',visual:window.GEOMETRY.trianglePair('aaa'),options:['They are congruent.','They are similar; their sizes may differ.','Their areas are equal.'],answer:1,hint:'Could one triangle be a larger copy of the other?',solution:'AAA / AA guarantees similarity. It gives no scale factor or equal side length, so congruence and equal area are not guaranteed.'},
-    {level:'Challenge',title:'Complete a short proof',prompt:'MP = MQ and NP = NQ. Which extra fact completes an SSS proof that △MNP ≡ △MNQ?',visual:kite(),options:['∠P = ∠Q because they look equal.','Both triangles have the same perimeter.','MN = MN because it is a common side.'],answer:2,hint:'Trace each triangle. Which edge belongs to both?',solution:'MN = MN (common side). With MP = MQ and NP = NQ, all three corresponding side pairs are equal, so △MNP ≡ △MNQ by SSS.'},
-    {level:'Challenge',title:'Check a proposed SAS proof',prompt:'Another triangle has the same two marked lengths and angle A. A student claims “congruent by SAS”. What is missing?',visual:practiceDiagram('ssa'),options:['Nothing: any matching angle works.','The included-angle condition is missing.','SAS requires three equal side pairs.'],answer:1,hint:'Read the middle letter of SAS and locate that angle.',solution:'SAS requires the equal angle between the two given sides. SSA is not a general congruence test. This evidence alone does not guarantee congruence.'},
-    {level:'Challenge',title:'Use the whole side',prompt:'The triangles are similar. Side 2 matches 8; side b matches the whole side 9 + b. Find b.',visual:practiceDiagram('whole'),answer:3,unit:'',hint:'The factor is 4. Multiply the whole small side b by 4.',solution:'4b = 9 + b, so 3b = 9 and b = 3. Check: (9 + 3) / 3 = 4.'}
+    {title:'Read the side evidence',prompt:'Use only the labelled lengths. Which test establishes congruence?',visual:congruent('sss'),options:['SSS','SAS','AAA'],answer:0,hint:'How many complete pairs of side lengths are given?',solution:'SSS: AB = DE, AC = DF and BC = EF. All three corresponding side pairs are equal.'},
+    {title:'Locate the included angle',prompt:'Which test uses the two given sides and the marked angle?',visual:congruent('sas'),options:['RHS','SAS','SSA'],answer:1,hint:'The marked angle is between the two known sides. Is a hypotenuse length given?',solution:'SAS: two side pairs are equal and the included angles are both 90°. RHS is not supported by the marked evidence because no hypotenuse length is given.'},
+    {title:'Find the hypotenuse first',prompt:'Which test is supported by these right angles and labelled lengths?',visual:congruent('rhs'),options:['SAS','AAA','RHS'],answer:2,hint:'The side opposite the right angle is the hypotenuse.',solution:'RHS: both triangles are right-angled, BC = EF (hypotenuses) and AC = DF (matching legs). The right angle is not between the two labelled sides, so this is not SAS evidence.'},
+    {title:'What does the evidence guarantee?',prompt:'Two triangles have the same three angles. Which conclusion is guaranteed?',visual:window.GEOMETRY.trianglePair('aaa'),options:['They are congruent.','They are similar; their sizes may differ.','Their areas are equal.'],answer:1,hint:'Could one triangle be a larger copy of the other?',solution:'AAA / AA guarantees similarity. It gives no scale factor or equal side length, so congruence and equal area are not guaranteed.'},
+    {title:'Find the reduction factor',prompt:'Find k for object → image. You can enter a fraction.',visual:practiceDiagram('scale'),answer:2/3,unit:'',hint:'Use image ÷ object. This is a reduction.',solution:'k = 8 ÷ 12 = 2/3. The reverse direction would have scale factor 3/2.'},
+    {title:'Find a missing image side',prompt:'Use the marked lengths to find EF.',condition:'△ABC ∼ △DEF',visual:practiceDiagram('missing'),answer:17.5,unit:'cm',hint:'AB ↔ DE gives the scale factor. BC ↔ EF gives the unknown side.',solution:'k = DE / AB = 10 / 4 = 2.5. EF = BC × k = 7 × 2.5 = 17.5 cm.'}
   ];
   let current=0;
   const states=questions.map(()=>({value:'',checked:false,correct:false,hint:false,solution:false}));
-  function quiz(s){return `<div class="scene-inner quiz-layout">${title(s)}<div class="quiz-toolbar"><div class="quiz-levels" role="group" aria-label="Choose practice level">${['Core','Develop','Challenge'].map((v,i)=>`<button class="quiet-button" type="button" data-q-level="${i*4}" aria-pressed="${i===0}">${v}</button>`).join('')}</div><strong data-q-score>0 / ${questions.length} solved</strong></div><div class="quiz-dots" role="group" aria-label="Practice questions">${questions.map((q,i)=>`<button type="button" data-q-index="${i}" aria-label="Question ${i+1}: ${esc(q.title)}" aria-pressed="${i===0}">${i+1}</button>`).join('')}</div><div class="quiz-body" data-quiz-body></div><p class="quiz-footnote">Write your working first. Hints and solutions are available when you need them.</p></div>`;}
+  function quiz(s){return `<div class="scene-inner quiz-layout">${title(s)}<div class="quiz-toolbar"><p>Write a reason or calculation before checking.</p><strong data-q-score>0 / ${questions.length} correct</strong></div><div class="quiz-dots" role="group" aria-label="Practice questions">${questions.map((q,i)=>`<button type="button" data-q-index="${i}" aria-label="Question ${i+1}: ${esc(q.title)}" aria-pressed="${i===0}">${i+1}</button>`).join('')}</div><div class="quiz-body" data-quiz-body></div><p class="quiz-footnote">Use the <a href="#slide-4">test table</a> when you need a reminder.</p><div class="quiz-print-key"><h3>Practice answer key</h3><ol>${questions.map(q=>`<li><strong>${esc(q.title)}</strong><p>${esc(q.solution)}</p></li>`).join('')}</ol></div></div>`;}
+
   function updateQuiz() {
     const host=document.querySelector('[data-quiz-body]');if(!host)return;
     const q=questions[current],st=states[current];
-    host.innerHTML=`<figure class="math-figure quiz-visual">${q.condition?`<p class="diagram-condition">${esc(q.condition)}</p>`:''}${q.visual||`<div class="given-card"><span>GIVEN</span><strong>${esc(q.given).replaceAll('\n','<br>')}</strong></div>`}<figcaption>${q.visual?'Use the marked measurements. Diagrams are not necessarily to scale.':'Use the matching order or relationship to set up your calculation.'}</figcaption></figure><section class="quiz-answer"><span class="eyebrow">${q.level} · Question ${current+1} of ${questions.length}</span><h3>${esc(q.title)}</h3><p>${esc(q.prompt)}</p>${q.options?`<div class="quiz-options">${q.options.map((o,i)=>`<button type="button" data-q-option="${i}" aria-pressed="${st.value===String(i)}" class="${st.value===String(i)?'selected':''}"><span>${String.fromCharCode(65+i)}</span>${esc(o)}</button>`).join('')}</div>`:`<label class="sr-only" for="practiceAnswer">Your answer</label><div class="numeric-answer"><input type="text" inputmode="decimal" id="practiceAnswer" placeholder="Your answer" autocomplete="off" value="${esc(st.value)}"><span>${esc(q.unit)}</span></div>`}<div class="quiz-actions"><button class="primary-button" type="button" data-q-action="check" ${st.value===''?'disabled':''}>Check answer</button><button class="text-button" type="button" data-q-action="hint" aria-expanded="${st.hint}">Hint</button><button class="text-button" type="button" data-q-action="solution" aria-expanded="${st.solution}">${st.solution?'Hide solution':'Show solution'}</button></div><div class="quiz-feedback" aria-live="polite">${st.checked?`<p class="answer-result ${st.correct?'correct':'try-again'}">${st.correct?'✓ Correct. Explain your reasoning.':'Try again. Check the corresponding parts and your calculation.'}</p>`:''}${st.hint?`<p class="quiz-hint"><b>Hint:</b> ${esc(q.hint)}</p>`:''}${st.solution?`<p class="quiz-solution"><b>Solution:</b> ${esc(q.solution)}</p>`:''}</div><div class="quiz-bottom"><button class="text-button" type="button" data-q-action="reset">Reset question</button><button class="quiet-button" type="button" data-q-action="next" ${current===questions.length-1?'disabled':''}>Next question →</button></div></section>`;
-    document.querySelector('[data-q-score]').textContent=`${states.filter(s=>s.correct).length} / ${questions.length} solved`;
+    host.innerHTML=`<figure class="math-figure quiz-visual">${q.condition?`<p class="diagram-condition">${esc(q.condition)}</p>`:''}${q.visual||`<div class="given-card"><span>GIVEN</span><strong>${esc(q.given).replaceAll('\n','<br>')}</strong></div>`}<figcaption>${q.visual?'Use the marked measurements. Diagrams are not necessarily to scale.':'Use the matching order or relationship to set up your calculation.'}</figcaption></figure><section class="quiz-answer"><span class="eyebrow">Question ${current+1} of ${questions.length}</span><h3>${esc(q.title)}</h3><p>${esc(q.prompt)}</p>${q.options?`<div class="quiz-options">${q.options.map((o,i)=>`<button type="button" data-q-option="${i}" aria-pressed="${st.value===String(i)}" class="${st.value===String(i)?'selected':''}"><span>${String.fromCharCode(65+i)}</span>${esc(o)}</button>`).join('')}</div>`:`<label class="sr-only" for="practiceAnswer">Your answer</label><div class="numeric-answer"><input type="text" inputmode="decimal" id="practiceAnswer" placeholder="Your answer" autocomplete="off" value="${esc(st.value)}"><span>${esc(q.unit)}</span></div>`}<div class="quiz-actions"><button class="primary-button" type="button" data-q-action="check" ${st.value===''?'disabled':''}>Check answer</button><button class="text-button" type="button" data-q-action="hint" aria-expanded="${st.hint}">Hint</button><button class="text-button" type="button" data-q-action="solution" aria-expanded="${st.solution}">${st.solution?'Hide solution':'Show solution'}</button></div><div class="quiz-feedback" aria-live="polite">${st.checked?`<p class="answer-result ${st.correct?'correct':'try-again'}">${st.correct?'✓ Correct. Explain your reasoning.':'Try again. Check the corresponding parts and your calculation.'}</p>`:''}${st.hint?`<p class="quiz-hint"><b>Hint:</b> ${esc(q.hint)}</p>`:''}${st.solution?`<p class="quiz-solution"><b>Solution:</b> ${esc(q.solution)}</p>`:''}</div><div class="quiz-bottom"><button class="text-button" type="button" data-q-action="reset">Reset question</button><button class="quiet-button" type="button" data-q-action="next" ${current===questions.length-1?'disabled':''}>Next question →</button></div></section>`;
+    document.querySelector('[data-q-score]').textContent=`${states.filter(s=>s.correct).length} / ${questions.length} correct`;
     document.querySelectorAll('[data-q-index]').forEach(b=>{const i=Number(b.dataset.qIndex);b.setAttribute('aria-pressed',String(i===current));b.classList.toggle('solved',states[i].correct);});
-    document.querySelectorAll('[data-q-level]').forEach(b=>b.setAttribute('aria-pressed',String(Math.floor(Number(b.dataset.qLevel)/4)===Math.floor(current/4))));
   }
   document.addEventListener('click',e=>{
     const referenceTab=e.target.closest('[data-comparison-view]');
     if(referenceTab){setComparisonView(referenceTab.dataset.comparisonView);return;}
-    const scale=e.target.closest('[data-tri-scale]');if(scale){document.querySelector('#triangleScale').value=scale.dataset.triScale;updateTriangle();}
-    const flip=e.target.closest('[data-tri-reflect]');if(flip){flip.setAttribute('aria-pressed',String(flip.getAttribute('aria-pressed')!=='true'));updateTriangle();}
-    if(e.target.closest('[data-tri-reset]')){document.querySelector('#triangleScale').value=1;document.querySelector('#triangleRotation').value=0;document.querySelector('[data-tri-reflect]').setAttribute('aria-pressed','false');updateTriangle();}
+    const mode=e.target.closest('[data-relationship]');if(mode){explorer.mode=mode.dataset.relationship;updateExplorer({rebuildPicker:true});return;}
+    const test=e.target.closest('[data-explorer-test]');if(test){explorer.test=test.dataset.explorerTest;updateExplorer();return;}
+    const scale=e.target.closest('[data-explorer-scale]');if(scale){explorer.scale=Number(scale.dataset.explorerScale);updateExplorer();return;}
+    if(e.target.closest('[data-explorer-overlay]')){explorer.overlay=!explorer.overlay;updateExplorer();return;}
+    if(e.target.closest('[data-explorer-reset]')){Object.assign(explorer,{mode:'congruent',test:'shape',scale:1.5,overlay:false});updateExplorer({rebuildPicker:true});return;}
     const choice=e.target.closest('[data-q-option]');if(choice){states[current].value=choice.dataset.qOption;states[current].checked=false;states[current].correct=false;updateQuiz();}
-    const jump=e.target.closest('[data-q-index],[data-q-level]');if(jump){current=Number(jump.dataset.qIndex??jump.dataset.qLevel);updateQuiz();}
+    const jump=e.target.closest('[data-q-index]');if(jump){current=Number(jump.dataset.qIndex);updateQuiz();}
     const button=e.target.closest('[data-q-action]');if(!button)return;
     const st=states[current],q=questions[current];
     if(button.dataset.qAction==='check'){
@@ -259,14 +315,21 @@
     updateQuiz();
   });
   document.addEventListener('input',e=>{
-    if(e.target.matches('#triangleScale,#triangleRotation'))updateTriangle();
-    if(e.target.matches('#practiceAnswer')){states[current].value=e.target.value;states[current].checked=false;states[current].correct=false;document.querySelector('[data-q-score]').textContent=`${states.filter(s=>s.correct).length} / ${questions.length} solved`;document.querySelector(`[data-q-index="${current}"]`).classList.remove('solved');const b=document.querySelector('[data-q-action="check"]');b.disabled=e.target.value.trim()==='';const feedback=document.querySelector('.answer-result');if(feedback)feedback.remove();}
+    if(e.target.matches('#practiceAnswer')){states[current].value=e.target.value;states[current].checked=false;states[current].correct=false;document.querySelector('[data-q-score]').textContent=`${states.filter(s=>s.correct).length} / ${questions.length} correct`;document.querySelector(`[data-q-index="${current}"]`).classList.remove('solved');const b=document.querySelector('[data-q-action="check"]');b.disabled=e.target.value.trim()==='';const feedback=document.querySelector('.answer-result');if(feedback)feedback.remove();}
   });
   document.addEventListener('keydown',e=>{
     if(e.target.matches('#practiceAnswer')&&e.key==='Enter'){e.preventDefault();document.querySelector('[data-q-action="check"]').click();}
   });
+  window.addEventListener('resize',()=>updateExplorer());
   document.addEventListener('DOMContentLoaded',()=>{
-    updateTriangle();updateQuiz();
+    updateExplorer();updateQuiz();
+    document.querySelector('[data-test-picker]')?.addEventListener('keydown',e=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+      e.preventDefault();e.stopPropagation();
+      const keys=explorerKeys(),index=keys.indexOf(explorer.test);
+      const next=e.key==='Home'?0:e.key==='End'?keys.length-1:(index+(e.key==='ArrowRight'?1:-1)+keys.length)%keys.length;
+      explorer.test=keys[next];updateExplorer({focusTest:true});
+    });
     document.querySelector('.comparison-mode-tabs')?.addEventListener('keydown',e=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
       e.preventDefault();e.stopPropagation();
@@ -275,19 +338,6 @@
       setComparisonView(next,true);
     });
   });
-  function pairedExampleDiagram(kind=0) {
-    const config=[{letters:'ABC',k:1,turned:false,side:'6 cm',angle:'65°'},
-      {letters:'DEF',k:1,turned:true,side:'x',angle:'θ'},
-      {letters:'PQR',k:1.5,turned:false,side:'y',angle:'φ'}][kind];
-    const base=[[0,-86.67],[-100,43.33],[130/Math.tan(65*Math.PI/180),43.33]];
-    const p=base.map(([x,y])=>[190+x*config.k*(config.turned?-1:1),160+y*config.k*(config.turned?-1:1)]);
-    return svg(`${config.letters}: ${kind===0?'AB = 6 cm and angle C = 65 degrees':kind===1?'congruent to ABC, with DE = x and angle F = theta':'similar to ABC with scale factor 1.5, PQ = y and angle R = phi'}.`,
-      labelledTriangle(p,config.letters,{sides:[{edge:0,label:config.side,offset:25}],angles:[{index:2,label:config.angle,radius:24,distance:kind===0?60:48}]}),'0 -25 380 320');
-  }
-  function pairedExample(s) {
-    const panels=[['Object · ABC','AB = 6 cm · ∠C = 65°'],['Congruent · DEF','△ABC ≡ △DEF'],['Similar · PQR','△ABC ∼ △PQR · k = 1.5']];
-    return `<div class="scene-inner worked-comparison">${title(s)}<p class="diagram-prompt">${esc(s.prompt)}</p><div class="worked-triangles">${panels.map(([label,relation],i)=>`<article class="worked-triangle"><header><h3>${esc(label)}</h3></header>${pairedExampleDiagram(i)}<p class="worked-relation">${esc(relation)}</p></article>`).join('')}</div><div class="evidence-panel worked-reasoning" data-reveal-style="focus"><ol class="evidence-list focus-step-list" aria-live="polite">${s.steps.map((step,i)=>`<li class="evidence-step" data-evidence-step hidden><span>${String(i+1).padStart(2,'0')}</span><div><strong>${esc(step.label)}</strong><p>${esc(step.body)}</p>${step.emphasis?`<p class="step-result">${esc(step.emphasis)}</p>`:''}</div></li>`).join('')}</ol><div class="evidence-actions"><button class="primary-button" type="button" data-geometry="reveal" aria-expanded="false">Reveal reasoning</button><button class="text-button" type="button" data-geometry="previous" disabled>Previous step</button><button class="text-button" type="button" data-geometry="reset">Reset</button><span class="reveal-count">0 / ${s.steps.length}</span></div></div><p class="takeaway"><span>REMEMBER</span><strong>${esc(s.takeaway)}</strong></p></div>`;
-  }
-  window.TRIANGLES={congruent,kite,ssa,cover,questions,pairedExampleDiagram};
-  window.LESSON_RENDERERS={...window.LESSON_RENDERERS,triangleLab,comparison,quiz,pairedExample,practice};
+  window.TRIANGLES={congruent,kite,ssa,cover,questions};
+  window.LESSON_RENDERERS={...window.LESSON_RENDERERS,testExplorer,comparison,quiz,practice};
 }());

@@ -270,3 +270,118 @@ svg .aaa-angle { font-size: 29px; dominant-baseline: central; stroke-width: 4px;
   .worked-comparison .takeaway { font-size: 1rem; }
   .quiz-visual svg { max-height: 90mm; }
 }
+
+/* Focused revision: two warm-up items and one interactive evidence canvas. */
+.warmup-layout .practice-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2rem; }
+.warmup-layout .warmup-item { padding: 1.4rem 1.6rem; }
+.warmup-figure svg { height: clamp(11rem,26vh,16rem); }
+.warmup-layout .warmup-prompt { font-size: clamp(1.3rem,1.65vw,1.7rem); }
+.explorer-layout { display: grid; grid-template-rows: auto auto auto minmax(0,1fr) auto; gap: 1rem; }
+.explorer-layout h2 { font-size: clamp(2.5rem,3.65vw,4rem); }
+.explorer-topline { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+.explorer-topline > p { margin: 0; max-width: 27rem; font-size: 1.1rem; color: var(--ink-soft); }
+.relationship-switch { display: flex; border: 2px solid var(--ink); }
+.relationship-switch button { border: 0; background: var(--paper); padding: .65rem 1.3rem; min-height: 3rem; font-weight: 850; font-size: 1.25rem; cursor: pointer; }
+.relationship-switch button + button { border-left: 2px solid var(--ink); }
+.relationship-switch button span { margin-left: .4rem; font-size: 1.45rem; }
+.relationship-switch [aria-pressed="true"] { background: var(--ink); color: var(--sale); }
+.test-picker { display: flex; gap: .5rem; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: .65rem; }
+.test-picker button { border: 1px solid var(--line); min-height: 2.8rem; padding: .55rem 1.1rem; background: var(--paper); font-weight: 850; font-size: 1.1rem; cursor: pointer; }
+.test-picker [aria-selected="true"] { background: var(--sale); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.explorer-stage { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(17rem,1fr); gap: 2rem; align-items: center; }
+.explorer-visual { min-width: 0; }
+.explorer-figure { margin: 0; }
+.explorer-figure svg { display: block; width: 100%; overflow: visible; }
+.explorer-image { transition: transform 600ms var(--ease-out); --triangle-scale: 1; }
+.explorer-object { --triangle-scale: 1; }
+.explorer-object .explorer-fill { fill: color-mix(in oklch,var(--blue) 7%,transparent); stroke: none; }
+.explorer-image .explorer-fill { fill: color-mix(in oklch,var(--tomato) 10%,transparent); stroke: none; }
+svg .explorer-edge { stroke: var(--ink); stroke-width: 2; opacity: .2; vector-effect: non-scaling-stroke; }
+svg .explorer-edge.is-evidence { stroke-width: 4; opacity: 1; }
+.explorer-figure .evidence-0.is-evidence,.explorer-figure .evidence-0 .equality-tick { stroke: var(--blue); }
+.explorer-figure .evidence-1.is-evidence,.explorer-figure .evidence-1 .equality-tick { stroke: var(--tomato-dark); }
+.explorer-figure .evidence-2.is-evidence,.explorer-figure .evidence-2 .equality-tick { stroke: var(--leaf); }
+.explorer-figure .explorer-ticks line { vector-effect: non-scaling-stroke; stroke-width: 2; }
+.explorer-figure .is-evidence { animation: evidence-glow 450ms ease-out; }
+.explorer-figure .explorer-angle path { stroke: var(--ink); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.explorer-figure .explorer-angle { filter: drop-shadow(0 0 3px var(--sale)); }
+.explorer-figure .explorer-length { font-size: calc(27px / var(--triangle-scale)); stroke-width: calc(7px / var(--triangle-scale)); }
+.explorer-figure .explorer-vertex { font-size: calc(24px / var(--triangle-scale)); stroke-width: calc(5px / var(--triangle-scale)); }
+.explorer-figure .explorer-caption { font-size: 23px; font-weight: 850; letter-spacing: 1px; }
+.is-overlaid .explorer-image .explorer-edge { stroke-dasharray: 9 7; }
+.is-overlaid .explorer-image .explorer-length,.is-overlaid .explorer-image .explorer-vertex { opacity: 0; }
+.explorer-tools { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .65rem; }
+.explorer-tools .text-button { margin-left: auto; }
+.explorer-tools [aria-pressed="true"] { background: var(--sale); }
+.explorer-tools .quiet-button,.explorer-scales button { width: auto; font-size: 1rem; }
+.explorer-scales { display: flex; gap: .4rem; }
+.explorer-scales button { border: 1px solid var(--ink); background: var(--paper); min-height: 2.75rem; padding: .45rem .65rem; font-weight: 800; cursor: pointer; }
+.explorer-legend { font-size: 1rem; color: var(--ink-soft); margin: .65rem 0 0; }
+.explorer-explanation { border-left: 2px solid var(--ink); padding-left: 1.6rem; }
+.explorer-explanation .eyebrow { margin-bottom: .6rem; }
+.explorer-explanation h3 { font-size: clamp(1.8rem,2.35vw,2.65rem); line-height: 1.06; }
+.explorer-explanation > p { margin: .8rem 0 0; font-size: clamp(1.15rem,1.4vw,1.45rem); line-height: 1.35; }
+.explorer-facts { margin-top: 1.1rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.explorer-facts p { margin: .4rem 0; font-size: clamp(1.1rem,1.4vw,1.45rem); font-weight: 850; line-height: 1.4; }
+.explorer-explanation .explorer-note { font-size: 1.1rem; color: var(--ink-soft); }
+.explorer-explanation .explorer-result { font-size: clamp(1.8rem,2.25vw,2.5rem); font-weight: 900; color: var(--tomato-dark); }
+.explorer-result span { display: block; margin-top: .4rem; color: var(--ink); font-size: 1.15rem; }
+.explorer-takeaway { margin: 0; border-top: 2px solid var(--ink); padding-top: .85rem; font-size: clamp(1.1rem,1.4vw,1.4rem); line-height: 1.5; }
+.explorer-takeaway > strong + strong { margin-left: .6rem; }
+.explorer-takeaway mark { background: var(--sale); padding-inline: .2rem; color: var(--ink); }
+.quiz-toolbar > p { margin: 0; font-size: 1.15rem; }
+.quiz-toolbar > strong { font-size: 1rem; }
+.quiz-dots button:nth-child(4n) { margin-right: 0; }
+.quiz-print-key { display: none; }
+@keyframes evidence-glow { from { opacity: .35; } to { opacity: 1; } }
+@media (max-height: 820px) and (min-width:52.01rem) {
+  .explorer-layout { gap: .6rem; padding-block: 1.3rem; }
+  .explorer-layout h2 { font-size: 3rem; }
+  .explorer-topline > p { font-size: 1rem; }
+  .explorer-explanation h3 { font-size: 2rem; }
+  .explorer-explanation > p { margin-top: .6rem; }
+  .explorer-facts { margin-top: .65rem; }
+  .warmup-figure svg { height: 11rem; }
+}
+@media (max-width:52rem) {
+  .warmup-layout .practice-list { grid-template-columns: 1fr; }
+  .warmup-layout .warmup-item { padding: 1rem; }
+  .scene-exit .exit-list { grid-template-columns: 1fr; }
+  .explorer-layout { display: block; }
+  .explorer-topline { align-items: start; flex-direction: column; gap: .8rem; margin-block: 1.2rem; }
+  .relationship-switch { width: 100%; }
+  .relationship-switch button { flex: 1; padding-inline: .65rem; font-size: 1.1rem; }
+  .test-picker { gap: .5rem; }
+  .test-picker button { flex: 1 0 auto; padding-inline: .7rem; }
+  .explorer-stage { grid-template-columns: 1fr; gap: 1.5rem; margin-block: 1.2rem; }
+  .explorer-figure svg { min-height: 12rem; }
+  .explorer-explanation { border-left: 0; border-top: 2px solid var(--ink); padding: 1.2rem 0 0; }
+  .explorer-tools { gap: .4rem; }
+  .explorer-tools .text-button { margin-left: 0; }
+  .quiz-toolbar { align-items: start; }
+  .quiz-toolbar > p { font-size: 1rem; }
+  .quiz-toolbar > strong { font-size: .9rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .explorer-image { transition: none; }
+  .explorer-figure .is-evidence { animation: none; }
+}
+@media print {
+  .explorer-layout { grid-template-rows: auto auto 1fr auto; gap: 1rem; }
+  .explorer-topline { grid-row: 2; }
+  .explorer-topline > p { max-width: none; }
+  .relationship-switch,.test-picker,.explorer-tools,.explorer-legend { display: none !important; }
+  .explorer-stage { grid-row: 3; }
+  .explorer-takeaway { grid-row: 4; }
+  .explorer-figure svg { width: 100%; }
+  .explorer-figure .is-evidence { animation: none; }
+  .explorer-image { transition: none; }
+  .warmup-figure svg { height: 46mm; }
+  .scene-quiz .quiz-layout { display: grid; grid-template-rows: auto 1fr; }
+  .scene-quiz .quiz-body,.scene-quiz .quiz-footnote { display: none; }
+  .quiz-print-key { display: block; }
+  .quiz-print-key h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+  .quiz-print-key ol { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem 3rem; padding-left: 1.5rem; }
+  .quiz-print-key li { padding-left: .25rem; font-size: 1.1rem; line-height: 1.4; break-inside: avoid; }
+  .quiz-print-key p { margin: .3rem 0 0; }
+}
